@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t instacode/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run instacode/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t instacode/multi-client ./client
+  - docker build -t instacode/multi-nginx ./nginx
+  - docker build -t instacode/multi-server ./server
+  - docker build -t instacode/multi-worker ./worker 
+  # Log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push instacode/multi-client
+  - docker push instacode/multi-nginx 
+  - docker push instacode/multi-server
+  - docker push instacode/multi-worker
